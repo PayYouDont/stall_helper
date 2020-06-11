@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">stall_helper</string>
+    <string name="title_nearby">附近</string>
+    <string name="title_stall">摊位</string>
+    <string name="title_notifications">设置</string>
+
+    <!--permission-->
+    <string name="help">帮助</string>
+    <string name="quit">退出</string>
+    <string name="settings">设置</string>
+    <string name="string_help_text">当前应用缺少必要权限。\n请点击“设置”-“权限”-打开所需权限。\n最后点击后退按钮，即可返回。</string>
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">登录或注册</string>
+    <string name="action_sign_in_short">登录</string>
+    <string name="welcome">"欢迎 !"</string>
+    <string name="invalid_username">无效的用户名</string>
+    <string name="invalid_password">密码不能少于6位</string>
+    <string name="invalid_password_again">密码不一致</string>
+    <string name="login_failed">登录失败</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="exit_text">再次点击退出</string>
+    <string name="register_success">注册成功</string>
+</resources>
