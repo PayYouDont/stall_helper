@@ -9,7 +9,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-        <include layout="@layout/title_bar_layout" />
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -34,53 +33,61 @@
             android:padding="20dp"
             android:orientation="vertical">
             <EditText
-                android:id="@+id/account_text"
+                android:id="@+id/name_text"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@drawable/border_all"
                 android:drawableLeft="@drawable/ic_login_user"
                 android:drawablePadding="20dp"
-                android:hint="请输入账号"
+                android:hint="摊位名称"
                 android:paddingLeft="10dp"
                 android:layout_marginTop="20dp"/>
             <EditText
-                android:id="@+id/nick_text"
+                android:id="@+id/brief_text"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@drawable/border_all"
+                android:drawableLeft="@drawable/ic_login_password"
+                android:drawablePadding="20dp"
+                android:hint="店铺简介"
+                android:paddingLeft="10dp"
+                android:layout_marginTop="20dp"/>
+           <!-- <Spinner
+                android:id="@+id/type_spinner"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@drawable/border_all"
                 android:drawableLeft="@drawable/ic_login_user"
                 android:drawablePadding="20dp"
-                android:hint="昵称"
                 android:paddingLeft="10dp"
-                android:layout_marginTop="20dp"/>
-            <EditText
-                android:id="@+id/password_text"
+                android:layout_marginTop="20dp"/>-->
+            <Spinner
+                android:id="@+id/position_spinner"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@drawable/border_all"
                 android:drawableLeft="@drawable/ic_login_password"
                 android:drawablePadding="20dp"
-                android:inputType="numberPassword"
-                android:hint="请输入密码"
+                android:hint="地摊位置"
                 android:paddingLeft="10dp"
                 android:layout_marginTop="20dp"/>
-            <EditText
-                android:id="@+id/password_again_text"
+            <TextView
+                android:id="@+id/position_text"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@drawable/border_all"
                 android:drawableLeft="@drawable/ic_login_password"
                 android:drawablePadding="20dp"
-                android:inputType="numberPassword"
-                android:hint="再输入一次密码"
+                android:gravity="left|center"
+                android:hint="0.0,0.0"
                 android:paddingLeft="10dp"
                 android:layout_marginTop="20dp"/>
             <Button
-                android:id="@+id/register_btn"
+                android:id="@+id/save_btn"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:layout_marginTop="20dp"
-                android:text="注册"
+                android:text="保存"
                 android:textColor="#fff"
                 android:background="#1BCC87"/>
         </LinearLayout>

@@ -76,18 +76,17 @@ class HttpUtil {
          * @return void
          */
         open fun post(
-            url: String?,
+            url: String,
             isSync: Boolean,
-            param: Map<String?, String?>?,
+            param: MutableMap<String, Any>?,
             listener: (response: Response) -> Unit
         ) {
             val formBody = FormBody.Builder()
             if (param!!.isNotEmpty()) {
-                param.forEach { (key: String?, value: String?) ->
-                    formBody.add(
-                        key!!,
-                        value!!
-                    )
+                param.forEach { (key: String, value: Any) ->
+                    if(value!=null){
+                        formBody.add(key,value.toString())
+                    }
                 }
             }
             val body: RequestBody = formBody.build()
@@ -110,14 +109,14 @@ class HttpUtil {
             }
         }
 
-        fun post(url: String?, isSync: Boolean, listener: (response: Response) -> Unit) {
+        fun post(url: String, isSync: Boolean, listener: (response: Response) -> Unit) {
             post(url, isSync, null, listener)
         }
 
-        fun post(url: String?, listener: (response: Response) -> Unit) {
+        fun post(url: String, listener: (response: Response) -> Unit) {
             post(url, false, null, listener)
         }
-        fun post(url: String?, param: Map<String?, String?>?, listener: (response: Response) -> Unit) {
+        fun post(url: String,param: MutableMap<String, Any>?, listener: (response: Response) -> Unit) {
             post(url, false, param, listener)
         }
         /**

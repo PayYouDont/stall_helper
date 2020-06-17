@@ -7,16 +7,15 @@ import com.gospell.stall.util.HttpUtil
 import com.gospell.stall.util.JsonUtil
 import org.json.JSONObject
 import java.io.IOException
-import java.lang.Exception
-import java.lang.RuntimeException
 
 /**
  * Class that handles authentication w/ login credentials and retrieves user information.
  */
 class LoginDataSource {
     private var resultMsg = ""
+    @Throws(Exception::class)
     fun login(username: String, password: String): Result<LoggedInUser> {
-        var map = HashMap<String?,String>()
+        var map = mutableMapOf<String,Any>()
         map["account"] = username
         map["password"] = password
         HttpUtil.post(Constants.loginUrl,map) {
@@ -24,12 +23,12 @@ class LoginDataSource {
             try {
                 var result = response.body!!.string()
                 var json = JSONObject(result)
-                if(json!!.getBoolean("success")){
+                if(json.getBoolean("success")){
                     Constants.user = JsonUtil.toBean(json.getString("user"),User::class.java)
                     Constants.token = json.getString("token")
                     resultMsg = "ok"
                 }else{
-                    resultMsg = json.getString("data")
+                    resultMsg = json.getString("msg")
                 }
             }catch (e:Exception){
                 resultMsg = e.message!!

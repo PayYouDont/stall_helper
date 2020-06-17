@@ -9,9 +9,7 @@ import android.os.Handler
 import android.os.Message
 import android.text.Editable
 import android.text.TextWatcher
-import android.view.KeyEvent
 import android.view.View
-import android.view.inputmethod.EditorInfo
 import android.widget.*
 import androidx.annotation.StringRes
 import androidx.lifecycle.Observer
@@ -28,6 +26,7 @@ import com.gospell.stall.util.HttpUtil
 import com.tencent.mm.opensdk.modelmsg.SendAuth
 import com.tencent.mm.opensdk.openapi.IWXAPI
 import com.tencent.mm.opensdk.openapi.WXAPIFactory
+import java.lang.Exception
 
 class LoginFragment : BaseFragment() {
 
@@ -111,10 +110,13 @@ class LoginFragment : BaseFragment() {
     private fun updateUiWithUser(model: LoggedInUserView) {
         val welcome = getString(R.string.welcome) + model.displayName
         Toast.makeText(requireContext(), welcome, Toast.LENGTH_LONG).show()
+        val editor = requireActivity().getSharedPreferences("userInfo", Context.MODE_PRIVATE).edit()
+        editor.putString("token", Constants.token)
+        editor.commit()
         goMainActivity()
     }
 
-    private fun showLoginFailed(@StringRes errorString: Int) {
+    private fun showLoginFailed( errorString: String) {
         val appContext = context?.applicationContext ?: return
         Toast.makeText(appContext, errorString, Toast.LENGTH_LONG).show()
     }

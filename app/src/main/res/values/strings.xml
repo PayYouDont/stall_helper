@@ -22,4 +22,8 @@
     <string name="title_activity_login">LoginActivity</string>
     <string name="exit_text">再次点击退出</string>
     <string name="register_success">注册成功</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="network_error">网络异常，请检查网络</string>
+
 </resources>

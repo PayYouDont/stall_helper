@@ -1,6 +1,5 @@
 package com.gospell.stall
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.KeyEvent
 import android.widget.Toast
@@ -11,7 +10,6 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.gospell.stall.other.ActivityTack
-import com.gospell.stall.ui.login.LoginActivity
 
 class MainActivity : AppCompatActivity() {
     private var lastExitTime : Long = 0//上一次点击退出app的时间戳
@@ -22,13 +20,9 @@ class MainActivity : AppCompatActivity() {
         val navView: BottomNavigationView = findViewById(R.id.nav_view)
         ActivityTack.getInstanse()!!.addActivity(this)
         val navController = findNavController(R.id.nav_host_fragment)
-        val appBarConfiguration = AppBarConfiguration(setOf(R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications))
+        val appBarConfiguration = AppBarConfiguration(setOf(R.id.navigation_home, R.id.navigation_stall, R.id.navigation_notifications))
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
-        if(Constants.user==null){
-            var intent = Intent(this,LoginActivity::class.java)
-            startActivity(intent)
-        }
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {

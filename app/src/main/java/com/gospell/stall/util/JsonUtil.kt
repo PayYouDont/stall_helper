@@ -32,7 +32,7 @@ class JsonUtil {
          * @Date 15:18 2020/5/19
          * @Param
          */
-        fun toJson(any: Any?): String {
+        fun toJsonFeatures(any: Any?): String {
             return JSON.toJSONString(any, config, *features)
         }
 
@@ -45,7 +45,7 @@ class JsonUtil {
          * @Date 15:18 2020/5/19
          * @Param
          */
-        fun toJSONNoFeatures(any: Any?): String? {
+        fun toJson(any: Any?): String? {
             return JSON.toJSONString(any, config)
         }
 
@@ -106,7 +106,9 @@ class JsonUtil {
          * @return
          */
         fun <K, V> stringToCollect(s: String?): Map<K, V>? {
-            return JSONObject.parseObject(s) as Map<K, V>
+            var jsonObject = JSONObject.parseObject(s)
+            jsonObject.remove("saved")
+            return jsonObject as Map<K, V>
         }
 
         /**

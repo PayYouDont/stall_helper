@@ -91,7 +91,7 @@ class RegisterFragment : BaseFragment(), View.OnClickListener {
         }
     }
     private fun toRegister(){
-        var param = HashMap<String?,String?>()
+        var param = mutableMapOf<String,Any>()
         param["account"] = accountText!!.text.toString()
         param["nickname"] = nickText!!.text.toString()
         param["password"] = passwordText!!.text.toString()
@@ -109,7 +109,7 @@ class RegisterFragment : BaseFragment(), View.OnClickListener {
     private fun isUserNameValid(username: String): Boolean {
         var success:Boolean? = false
         if(username.isNotBlank()){
-            var param = HashMap<String?,String?>()
+            var param = mutableMapOf<String,Any>()
             param["account"] =  accountText!!.text.toString()
             HttpUtil.post(Constants.checkAccountUrl,param){
                     response ->

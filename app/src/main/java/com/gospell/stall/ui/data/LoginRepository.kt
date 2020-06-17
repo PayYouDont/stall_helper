@@ -1,6 +1,7 @@
 package com.gospell.stall.ui.data
 
 import com.gospell.stall.ui.data.model.LoggedInUser
+import java.lang.Exception
 
 /**
  * Class that requests authentication and user information from the remote data source and
@@ -26,7 +27,7 @@ class LoginRepository(val dataSource: LoginDataSource) {
         user = null
         dataSource.logout()
     }
-
+    @Throws(Exception::class)
     fun login(username: String, password: String): Result<LoggedInUser> {
         // handle login
         val result = dataSource.login(username, password)
