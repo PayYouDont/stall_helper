@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">stall_helper</string>
     <string name="title_nearby">附近</string>
-    <string name="title_stall">摊位</string>
-    <string name="title_notifications">设置</string>
+    <string name="title_user_info">我的</string>
+    <string name="title_setting">设置</string>
 
     <!--permission-->
     <string name="help">帮助</string>
@@ -22,8 +22,9 @@
     <string name="title_activity_login">LoginActivity</string>
     <string name="exit_text">再次点击退出</string>
     <string name="register_success">注册成功</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="register_fail">注册失败</string>
+    <string name="dummy_content">广告位招租</string>
     <string name="network_error">网络异常，请检查网络</string>
-
+    <string name="conn_server_error">网络异常，请求接服务器失败</string>
+    <string name="loading_msg">加载中...</string>
 </resources>

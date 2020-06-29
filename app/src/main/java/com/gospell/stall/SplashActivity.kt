@@ -3,25 +3,20 @@ package com.gospell.stall
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
-import android.view.MotionEvent
 import android.view.View
-import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.gospell.stall.common.util.NetworkUtil
 import com.gospell.stall.entity.User
+import com.gospell.stall.helper.ActivityTack
+import com.gospell.stall.helper.RequestHelper
 import com.gospell.stall.ui.login.LoginActivity
-import com.gospell.stall.util.HttpUtil
 import com.gospell.stall.util.JsonUtil
-import com.gospell.stall.util.ToastUtil
 import org.json.JSONObject
-import java.lang.Exception
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -53,13 +48,13 @@ class SplashActivity : AppCompatActivity() {
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.activity_splash)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         // Set up the user interaction to manually show or hide the system UI.
         fullscreenContent = findViewById(R.id.fullscreen_content)
 
         fullscreenContentControls = findViewById(R.id.fullscreen_content_controls)
+        ActivityTack.getInstanse()?.addActivity(this)
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
@@ -99,19 +94,17 @@ class SplashActivity : AppCompatActivity() {
             Toast.makeText(this,R.string.network_error,Toast.LENGTH_SHORT).show() //网络异常，请检查网络
         }
     }
-    fun login(){
+    private fun login(){
         val sharedPreferences = getSharedPreferences("userInfo", Context.MODE_PRIVATE)
         val token = sharedPreferences.getString("token", "")
         if (token!!.isNotEmpty()) {
             var map = mutableMapOf<String,Any>()
             map["token"] = token
-            HttpUtil.post(Constants.loginUrl,map) {
-                        response->
-                    var result = response.body!!.string()
-                    Log.i("login:----->",result)
-                    var json = JSONObject(result)
-                    var intent:Intent
-                    if(json.getBoolean("success")){
+            RequestHelper.getInstance(this).post(Constants.loginUrl,map,"加载中..."){
+                    result->
+                var json = JSONObject(result)
+                var intent:Intent
+                if(json.getBoolean("success")){
                     Constants.user = JsonUtil.toBean(json.getString("user"), User::class.java)
                     Constants.token = json.getString("token")
                     val editor = sharedPreferences.edit()

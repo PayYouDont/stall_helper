@@ -1,12 +1,13 @@
-package com.gospell.stall.ui.home
+package com.gospell.stall
 
 import android.Manifest
+import android.content.Intent
 import android.graphics.BitmapFactory
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.amap.api.location.AMapLocation
 import com.amap.api.location.AMapLocationClient
 import com.amap.api.location.AMapLocationClientOption
@@ -14,57 +15,58 @@ import com.amap.api.location.AMapLocationListener
 import com.amap.api.maps.AMap
 import com.amap.api.maps.CameraUpdateFactory
 import com.amap.api.maps.LocationSource
-import com.amap.api.maps.LocationSource.OnLocationChangedListener
 import com.amap.api.maps.MapView
 import com.amap.api.maps.model.*
-import com.gospell.stall.Constants
-import com.gospell.stall.R
-import com.gospell.stall.common.annotation.InjectView
-import com.gospell.stall.common.base.BaseFragment
 import com.gospell.stall.entity.User
+import com.gospell.stall.helper.ActivityTack
 import com.gospell.stall.helper.RequestHelper
-import com.gospell.stall.helper.StallInfoWindowAdapter
 import com.gospell.stall.ui.util.ToastUtil
 import com.gospell.stall.ui.view.LoadDialog
 import com.gospell.stall.util.JsonUtil
 import org.json.JSONObject
 import ru.alexbykov.nopermission.PermissionHelper
 
-
-class HomeFragment : BaseFragment(), LocationSource, AMapLocationListener,AMap.OnMarkerClickListener{
-
+class MapActivity : AppCompatActivity(),LocationSource, AMapLocationListener {
     private var myLocationStyle: MyLocationStyle? = null
     private var aMap: AMap? = null
 
     //定位需要的数据
-    private var mListener: OnLocationChangedListener? = null
+    private var mListener: LocationSource.OnLocationChangedListener? = null
     private var mlocationClient: AMapLocationClient? = null
     private var mLocationOption: AMapLocationClientOption? = null
     private var permissionHelper: PermissionHelper? = null
-    //自定义marker相关
-    private var oldMarker: Marker? = null
-    @InjectView(layout = R.layout.fragment_home)
-    private var root: View? = null;
 
-    @InjectView(id = R.id.map)
+    //当前缩放等级可视区域范围坐标
+    var southwest: LatLng? = null //西南角坐标
+    var northeast: LatLng? = null //东北角坐标
+
+    var markers = HashMap<Int, Marker>()
+
     private var mMapView: MapView? = null
-    override fun onCreateView() {
-        //在activity执行onCreate时执行mMapView.onCreate(savedInstanceState)，创建地图
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        //去掉标题栏
+        supportActionBar?.hide()
+        setContentView(R.layout.activity_map)
+        mMapView = findViewById(R.id.map)
         mMapView!!.onCreate(savedInstanceState)
-        aMap = mMapView?.map
         permissionHelper = PermissionHelper(this)
         permissionHelper!!.check(
             Manifest.permission.ACCESS_FINE_LOCATION
         ).onSuccess {
             initMap()
+            setPosition()
         }.onDenied {
-            Toast.makeText(requireContext(), "权限被拒绝！将无法获取到WiFi信息!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "权限被拒绝！将无法获取到WiFi信息!", Toast.LENGTH_SHORT).show()
         }.onNeverAskAgain {
-            Toast.makeText(requireContext(), "自动同步功能需要授权后才能使用！", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "自动同步功能需要授权后才能使用！", Toast.LENGTH_SHORT).show();
             permissionHelper!!.startApplicationSettingsActivity();
         }.run()
+        ActivityTack.getInstanse()?.addActivity(this)
     }
     private fun initMap() {
+        aMap = mMapView?.map
+        aMap = mMapView?.map
         //设置地图的放缩级别
         aMap?.moveCamera(CameraUpdateFactory.zoomTo(12f))
         // 设置定位监听
@@ -84,44 +86,51 @@ class HomeFragment : BaseFragment(), LocationSource, AMapLocationListener,AMap.O
         // 设置为true表示启动显示定位蓝点，false表示隐藏定位蓝点并不进行定位，默认是false。
         aMap?.isMyLocationEnabled = true
         aMap?.setOnMyLocationChangeListener { location: Location? -> position(location) }
-        aMap?.setInfoWindowAdapter(StallInfoWindowAdapter(requireContext()))
-        //aMap?.setOnMapClickListener(this)
-        aMap?.setOnMarkerClickListener(this)
     }
 
     //上传位置信息
     private fun position(location: Location?) {
         //从location对象中获取经纬度信息，地址描述信息，建议拿到位置之后调用逆地理编码接口获取
         if (Constants.user != null && location != null) {
-            Constants.user?.latitude = location.latitude
-            Constants.user?.longitude = location.longitude
-            var map = mutableMapOf<String, Any>()
-            map["id"] = Constants.user?.id.toString()
-            map["latitude"] = Constants.user?.latitude.toString()
-            map["longitude"] = Constants.user?.longitude.toString()
-            RequestHelper.getInstance(requireContext())
-                .post(Constants.updateUrl, map, "定位中...") { result ->
-                    var json = JSONObject(result)
-                    requireActivity().runOnUiThread {
-                        if (json.getBoolean("success")) {
-                            val visibleRegion = aMap?.projection!!.visibleRegion
-                            val latLngBounds = visibleRegion.latLngBounds //由可视区域的四个顶点形成的经纬度范围
-                            initNearUsers(latLngBounds.southwest,latLngBounds.northeast)
-                        } else {
-                            ToastUtil.makeText(requireContext(), "上传位置信息失败!")
+            var latitude = Constants.user?.latitude
+            var longitude = Constants.user?.longitude
+            var lat = String.format("%.4f", location.latitude).toDouble()
+            var log = String.format("%.4f", location.longitude).toDouble()
+            if (latitude != lat || longitude != log || markers.isNullOrEmpty()) {
+                val visibleRegion = aMap?.projection!!.visibleRegion
+                val latLngBounds = visibleRegion.latLngBounds //由可视区域的四个顶点形成的经纬度范围
+                southwest = latLngBounds.southwest //西南角坐标
+                northeast = latLngBounds.northeast //东北角坐标
+                Constants.user?.latitude = lat
+                Constants.user?.longitude = log
+                var map = mutableMapOf<String, Any>()
+                map["id"] = Constants.user?.id.toString()
+                map["latitude"] = Constants.user?.latitude.toString()
+                map["longitude"] = Constants.user?.longitude.toString()
+                RequestHelper.getInstance(this)
+                    .post(Constants.updateUrl, map, "定位中...") { result ->
+                        var json = JSONObject(result)
+                        runOnUiThread {
+                            if (json.getBoolean("success")) {
+                                if (markers.isNullOrEmpty()) {//附近摊位初始化时只加载一次
+                                    initNearUsers()
+                                }
+                            } else {
+                                ToastUtil.makeText(this, "上传位置信息失败!")
+                            }
                         }
                     }
-                }
+            }
         }
     }
-    //获取当前缩放等级可视区域范围坐标内的店铺信息
-    private fun initNearUsers(southwest: LatLng,northeast: LatLng) {
+
+    private fun initNearUsers() {
         var map = mutableMapOf<String, Any>()
-        map["southwestLat"] = southwest.latitude.toString()
-        map["southwestLng"] = southwest.longitude.toString()
-        map["northeastLat"] = northeast.latitude.toString()
-        map["northeastLng"] = northeast.longitude.toString()
-        RequestHelper.getInstance(requireContext())
+        map["southwestLat"] = southwest?.latitude.toString()
+        map["southwestLng"] = southwest?.longitude.toString()
+        map["northeastLat"] = northeast?.latitude.toString()
+        map["northeastLng"] = northeast?.longitude.toString()
+        RequestHelper.getInstance(this)
             .post(Constants.getNearStallUrl, map, "正在获取周围摊位...") { result ->
                 var json = JSONObject(result)
                 if (json.getBoolean("success")) {
@@ -134,23 +143,19 @@ class HomeFragment : BaseFragment(), LocationSource, AMapLocationListener,AMap.O
                         aMap!!.addMarker(marker)
                     }
                 }else{
-                    requireActivity().runOnUiThread {
+                    runOnUiThread {
                         var msg = json.getString("msg")
-                        LoadDialog(requireContext()).setResultMessage("获取周围摊位信息失败！$msg")
+                        LoadDialog(this).setResultMessage("获取周围摊位信息失败！$msg")
                     }
                 }
             }
     }
 
-    override fun onMarkerClick(p0: Marker?): Boolean {
-        if(oldMarker!=p0){
-            oldMarker?.hideInfoWindow()
-        }
-        oldMarker = p0
-        return false; //返回 “false”，除定义的操作之外，默认操作也将会被执行
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String?>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String?>,
+        grantResults: IntArray
+    ) {
         permissionHelper!!.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
@@ -188,11 +193,11 @@ class HomeFragment : BaseFragment(), LocationSource, AMapLocationListener,AMap.O
         mlocationClient = null
     }
 
-    override fun activate(listener: OnLocationChangedListener?) {
+    override fun activate(listener: LocationSource.OnLocationChangedListener?) {
         mListener = listener
         if (mlocationClient == null) {
             //初始化定位
-            mlocationClient = AMapLocationClient(requireActivity())
+            mlocationClient = AMapLocationClient(this)
             //初始化定位参数
             mLocationOption = AMapLocationClientOption()
             //设置定位回调监听
@@ -220,6 +225,50 @@ class HomeFragment : BaseFragment(), LocationSource, AMapLocationListener,AMap.O
                 val errText = "定位失败," + aMapLocation.errorCode + ": " + aMapLocation.errorInfo
                 Log.e("定位AmapErr", errText)
             }
+        }
+    }
+    private fun setPosition(){
+        var code = intent.getIntExtra("code",-1)
+        if (code>0){
+            var markerOptions = MarkerOptions()
+            var lat = Constants.user?.latitude
+            var lng = Constants.user?.longitude
+            while(lat==null||lng==null){
+                Thread.sleep(1000)
+            }
+            var latLng = LatLng(lat,lng)
+            markerOptions.position(latLng)
+            markerOptions.title("拖动选择位置")
+            markerOptions.draggable(true)
+            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(resources,R.drawable.icon_location_marker)))
+            // 将Marker设置为贴地显示，可以双指下拉地图查看效果
+            markerOptions.isFlat = true;//设置marker平贴地图效果
+            aMap?.setOnMarkerDragListener(object :AMap.OnMarkerDragListener{
+                override fun onMarkerDragEnd(p0: Marker?) {
+                    var latLng = p0?.position
+                    LoadDialog(this@MapActivity)
+                        .setResultMessage("是否定位在这个位置？")
+                        .setConfirm("确定")
+                        .setConfirmListener{ _, dialog ->
+                            dialog.dismiss()
+                            var intent = Intent().putExtra("position","${latLng?.latitude},${latLng?.longitude}")
+                            setResult(code,intent)
+                            finish()
+                        }
+                        .setCancel("取消")
+                        .setCancelListener{ _, dialog ->
+                            dialog.dismiss()
+                        }
+                        .show()
+                }
+
+                override fun onMarkerDragStart(p0: Marker?) {
+                }
+
+                override fun onMarkerDrag(p0: Marker?) {
+                }
+            })
+            aMap?.addMarker(markerOptions)
         }
     }
 }

@@ -5,7 +5,7 @@ import android.view.KeyEvent
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.gospell.stall.R
-import com.gospell.stall.other.ActivityTack
+import com.gospell.stall.helper.ActivityTack
 
 class LoginActivity : AppCompatActivity() {
     private var lastExitTime : Long = 0//上一次点击退出app的时间戳

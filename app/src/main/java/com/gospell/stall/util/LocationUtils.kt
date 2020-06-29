@@ -199,7 +199,7 @@ class LocationUtils {
             longitude: Double
         ): String? {
             val address: Address? = getAddress(context, latitude, longitude)
-            return if (address == null) "unknown" else address.getCountryName()
+            return if (address == null) "unknown" else address.countryName
         }
 
         /**

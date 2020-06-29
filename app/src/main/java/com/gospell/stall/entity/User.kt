@@ -3,12 +3,12 @@ package com.gospell.stall.entity
 import android.util.Log
 import org.json.JSONException
 import org.json.JSONObject
-import org.litepal.crud.LitePalSupport
 import java.util.*
 
-open class User : LitePalSupport() {
+open class User{
     var id: Int? = null
     var nickname: String? = null
+    var phoneNumber: String? = null
     var deviceId: String? = null
     var account: String? = null
     var password: String? = null
@@ -25,7 +25,7 @@ open class User : LitePalSupport() {
     var longitude: Double? = null
 
     //店铺信息
-    var stallInfo: StallInfo? = null;
+    var stallInfo: StallInfo? = null
     open fun parseWXUserInfo(response: String?): User? {
         try {
             val jsonObject = JSONObject(response)

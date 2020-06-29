@@ -2,6 +2,8 @@ package com.gospell.stall.util
 
 import android.util.Log
 import okhttp3.*
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
@@ -15,12 +17,7 @@ class HttpUtil {
          * @Param [url, param, listener]
          * @return void
          */
-        open fun get(
-            url: String,
-            isSync: Boolean,
-            param: Map<String?, String?>?,
-            listener: (response: Response) -> Unit
-        ) {
+        fun get(url: String, param: Map<String, Any?>?, callback: Callback) {
             var url = url
             if (param != null && param.isNotEmpty()) {
                 val buffer = StringBuffer()
@@ -29,10 +26,10 @@ class HttpUtil {
                 } else {
                     buffer.append("&")
                 }
-                param.forEach(BiConsumer { key: String?, value: String? ->
+                param.forEach(BiConsumer { key: String?, value: Any? ->
                     buffer.append(key)
                     buffer.append("=")
-                    buffer.append(value)
+                    buffer.append(value.toString())
                     buffer.append("&")
                 })
                 buffer.deleteCharAt(buffer.length - 1)
@@ -42,32 +39,13 @@ class HttpUtil {
             val builder = Request.Builder().url(url)
             builder.method("GET", null)
             val call = client.newCall(builder.build())
-            if (isSync) {
-                listener.invoke(call.execute())
-            } else {
-                call.enqueue(object : Callback {
-                    override fun onFailure(call: Call, e: IOException) {
-                        Log.e("HttpUtil.get()", e.message, e)
-                    }
-
-                    @Throws(IOException::class)
-                    override fun onResponse(call: Call, response: Response) {
-                        //Log.d("HttpUtil.get()", response.message)
-                        listener.invoke(response)
-                    }
-                })
-            }
+            call.enqueue(callback)
         }
 
-        open fun get(url: String, isSync: Boolean, listener: (response: Response) -> Unit) {
-            get(url!!, isSync, null, listener)
+        open fun get(url: String, callback: Callback) {
+            get(url, null, callback)
         }
-        open fun get(url: String, listener: (response: Response) -> Unit) {
-            get(url!!, false, null, listener)
-        }
-        open fun get(url: String,param: Map<String?, String?>?, listener: (response: Response) -> Unit) {
-            get(url!!, false, param, listener)
-        }
+
         /**
          * @Author peiyongdong
          * @Description ( post请求 )
@@ -75,50 +53,33 @@ class HttpUtil {
          * @Param [url, param, listener]
          * @return void
          */
-        open fun post(
-            url: String,
-            isSync: Boolean,
-            param: MutableMap<String, Any>?,
-            listener: (response: Response) -> Unit
-        ) {
+        fun post(url: String, param: MutableMap<String, Any>?, callback: Callback) {
             val formBody = FormBody.Builder()
-            if (param!!.isNotEmpty()) {
-                param.forEach { (key: String, value: Any) ->
-                    if(value!=null){
-                        formBody.add(key,value.toString())
-                    }
+            param?.forEach { (key: String, value: Any) ->
+                if (value != null) {
+                    formBody.add(key, value.toString())
                 }
             }
             val body: RequestBody = formBody.build()
             val request = Request.Builder().post(body).url(url!!).build()
             val client = OkHttpClient().newBuilder().readTimeout(30, TimeUnit.SECONDS).build()
             val call = client.newCall(request)
-            if (isSync) {
-                listener.invoke(call.execute())
-            } else {
-                call.enqueue(object : Callback {
-                    override fun onFailure(call: Call, e: IOException) {
-                        Log.e("HttpUtil.post()", e.message, e)
-                    }
-
-                    @Throws(IOException::class)
-                    override fun onResponse(call: Call, response: Response) {
-                        listener.invoke(response)
-                    }
-                })
-            }
+            call.enqueue(callback)
         }
 
-        fun post(url: String, isSync: Boolean, listener: (response: Response) -> Unit) {
-            post(url, isSync, null, listener)
+        fun post(url: String, callback: Callback) {
+            post(url, null, callback)
         }
 
-        fun post(url: String, listener: (response: Response) -> Unit) {
-            post(url, false, null, listener)
+        fun uploadFile(url: String, contentType: MediaType, file: File, callback: Callback) {
+            var fileBody = file.asRequestBody(contentType)
+            var multipartBody = MultipartBody.Builder().addFormDataPart("file", file.name, fileBody).build()
+            val request = Request.Builder().post(multipartBody).url(url!!).build()
+            val client = OkHttpClient().newBuilder().readTimeout(30, TimeUnit.SECONDS).build()
+            val call = client.newCall(request)
+            call.enqueue(callback)
         }
-        fun post(url: String,param: MutableMap<String, Any>?, listener: (response: Response) -> Unit) {
-            post(url, false, param, listener)
-        }
+
         /**
          * @Author peiyongdong
          * @Description ( 获取服务返回的文件名称，前提是服务器消息头中有filename字段 )
@@ -142,5 +103,6 @@ class HttpUtil {
             }
             return ""
         }
+
     }
 }

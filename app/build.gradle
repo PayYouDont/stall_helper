@@ -21,6 +21,11 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        android.applicationVariants.all { variant ->
+            variant.outputs.all {
+                outputFileName = "地摊_V${versionName}.apk"
+            }
+        }
     }
 
     buildTypes {
@@ -57,9 +62,12 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     /*第三方插件*/
     implementation 'ru.alexbykov:nopermission:1.1.2'
-    implementation 'org.litepal.android:java:3.0.0'
     implementation 'com.squareup.okhttp3:okhttp:4.7.2'
     implementation 'org.conscrypt:conscrypt-android:2.2.1'
+    /*图片裁剪库*/
+    implementation 'com.github.yalantis:ucrop:2.2.5'
+    /*加载动画*/
+    implementation 'com.github.ybq:Android-SpinKit:1.4.0'
     /*fastjson*/
     implementation("com.alibaba:fastjson:1.2.9")
     /*微信SDK*/
@@ -68,5 +76,4 @@ dependencies {
     implementation 'com.amap.api:3dmap:latest.integration'
     implementation 'com.amap.api:search:latest.integration'
     implementation 'com.amap.api:location:latest.integration'
-
 }

@@ -12,8 +12,7 @@
         <include layout="@layout/title_bar_layout" />
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="200dp"
             android:gravity="center"
             android:background="#1BCC87">
             <com.gospell.stall.ui.view.CircleImageView
@@ -25,64 +24,85 @@
                 app:layout_constraintHorizontal_bias="0.498"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_launcher"/>
+                app:srcCompat="@drawable/icon_head_default"/>
         </LinearLayout>
-        <LinearLayout
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="2"
-            android:padding="20dp"
-            android:orientation="vertical">
-            <EditText
-                android:id="@+id/account_text"
+            android:layout_height="wrap_content">
+            <LinearLayout
+                android:id="@+id/register_layout"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:background="@drawable/border_all"
-                android:drawableLeft="@drawable/ic_login_user"
-                android:drawablePadding="20dp"
-                android:hint="请输入账号"
-                android:paddingLeft="10dp"
-                android:layout_marginTop="20dp"/>
-            <EditText
-                android:id="@+id/nick_text"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:background="@drawable/border_all"
-                android:drawableLeft="@drawable/ic_login_user"
-                android:drawablePadding="20dp"
-                android:hint="昵称"
-                android:paddingLeft="10dp"
-                android:layout_marginTop="20dp"/>
-            <EditText
-                android:id="@+id/password_text"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:background="@drawable/border_all"
-                android:drawableLeft="@drawable/ic_login_password"
-                android:drawablePadding="20dp"
-                android:inputType="numberPassword"
-                android:hint="请输入密码"
-                android:paddingLeft="10dp"
-                android:layout_marginTop="20dp"/>
-            <EditText
-                android:id="@+id/password_again_text"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:background="@drawable/border_all"
-                android:drawableLeft="@drawable/ic_login_password"
-                android:drawablePadding="20dp"
-                android:inputType="numberPassword"
-                android:hint="再输入一次密码"
-                android:paddingLeft="10dp"
-                android:layout_marginTop="20dp"/>
-            <Button
-                android:id="@+id/register_btn"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="20dp"
-                android:text="注册"
-                android:textColor="#fff"
-                android:background="#1BCC87"/>
-        </LinearLayout>
+                android:layout_height="wrap_content"
+                android:padding="20dp"
+                android:orientation="vertical">
+                <EditText
+                    android:id="@+id/account_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/border_all"
+                    android:drawableLeft="@drawable/ic_login_user"
+                    android:drawablePadding="20dp"
+                    android:hint="请输入账号"
+                    android:digits="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                    android:paddingLeft="10dp"
+                    android:layout_marginTop="20dp"/>
+                <EditText
+                    android:id="@+id/nick_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/border_all"
+                    android:drawableLeft="@drawable/ic_login_user"
+                    android:drawablePadding="20dp"
+                    android:hint="昵称"
+                    android:paddingLeft="10dp"
+                    android:layout_marginTop="20dp"/>
+                <EditText
+                    android:id="@+id/phone_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/border_all"
+                    android:drawableLeft="@drawable/ic_login_user"
+                    android:drawablePadding="20dp"
+                    android:hint="手机号码"
+                    android:inputType="number"
+                    android:paddingLeft="10dp"
+                    android:layout_marginTop="20dp"/>
+                <EditText
+                    android:id="@+id/password_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/border_all"
+                    android:drawableLeft="@drawable/ic_login_password"
+                    android:drawablePadding="20dp"
+                    android:inputType="textPassword"
+                    android:digits="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^*"
+                    android:hint="输入6位以上密码(数字字母英文符号)"
+                    android:paddingLeft="10dp"
+                    android:layout_marginTop="20dp"/>
+                <EditText
+                    android:id="@+id/password_again_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/border_all"
+                    android:drawableLeft="@drawable/ic_login_password"
+                    android:drawablePadding="20dp"
+                    android:inputType="textPassword"
+                    android:digits="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^*"
+                    android:hint="再次输入密码"
+                    android:paddingLeft="10dp"
+                    android:layout_marginTop="20dp"/>
+                <Button
+                    android:id="@+id/register_btn"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="20dp"
+                    android:text="注册"
+                    android:textColor="#fff"
+                    android:background="#1BCC87"/>
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"></Space>
+            </LinearLayout>
+        </ScrollView>
     </LinearLayout>
 </FrameLayout>

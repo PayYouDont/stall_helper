@@ -9,29 +9,33 @@ import android.os.Handler
 import android.os.Message
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
+import android.util.Patterns
 import android.view.View
 import android.widget.*
-import androidx.annotation.StringRes
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import com.gospell.stall.Constants
 import com.gospell.stall.MainActivity
 import com.gospell.stall.R
 import com.gospell.stall.common.annotation.InjectView
 import com.gospell.stall.common.base.BaseFragment
 import com.gospell.stall.entity.User
+import com.gospell.stall.helper.RequestHelper
 import com.gospell.stall.ui.register.RegisterFragment
+import com.gospell.stall.ui.util.ToastUtil
 import com.gospell.stall.ui.view.CircleImageView
+import com.gospell.stall.ui.view.LoadDialog
 import com.gospell.stall.util.HttpUtil
+import com.gospell.stall.util.JsonUtil
 import com.tencent.mm.opensdk.modelmsg.SendAuth
 import com.tencent.mm.opensdk.openapi.IWXAPI
 import com.tencent.mm.opensdk.openapi.WXAPIFactory
-import java.lang.Exception
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Response
+import org.json.JSONObject
+import java.io.IOException
 
 class LoginFragment : BaseFragment() {
-
-    private lateinit var loginViewModel: LoginViewModel
-
     @InjectView(layout = R.layout.fragment_login)
     private var root: View? = null
 
@@ -61,32 +65,6 @@ class LoginFragment : BaseFragment() {
     private var api: IWXAPI? = null
     private var user: User? = null
     override fun onCreateView() {
-        loginViewModel = ViewModelProvider(this,LoginViewModelFactory()).get(LoginViewModel::class.java)
-        loginViewModel.loginFormState.observe(viewLifecycleOwner,
-            Observer {loginFormState ->
-                if (loginFormState == null) {
-                    return@Observer
-                }
-                loginBtn!!.isEnabled = loginFormState.isDataValid
-                loginFormState.usernameError?.let {
-                    userText!!.error = getString(it)
-                }
-                loginFormState.passwordError?.let {
-                    passwordText!!.error = getString(it)
-                }
-            })
-
-        loginViewModel.loginResult.observe(viewLifecycleOwner,
-            Observer { loginResult ->
-                loginResult ?: return@Observer
-                //loadingProgressBar!!.visibility = View.GONE
-                loginResult.error?.let {
-                    showLoginFailed(it)
-                }
-                loginResult.success?.let {
-                    updateUiWithUser(it)
-                }
-            })
         val afterTextChangedListener = object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
                 // ignore
@@ -95,31 +73,56 @@ class LoginFragment : BaseFragment() {
                 // ignore
             }
             override fun afterTextChanged(s: Editable) {
-                loginViewModel.loginDataChanged(userText!!.text.toString(),passwordText!!.text.toString() )
+                loginDataChanged(userText!!.text.toString(),passwordText!!.text.toString() )
             }
         }
         userText!!.addTextChangedListener(afterTextChangedListener)
         passwordText!!.addTextChangedListener(afterTextChangedListener)
         loginBtn!!.setOnClickListener {
-            loginViewModel.login(userText!!.text.toString(), passwordText!!.text.toString())
+            login(userText!!.text.toString(), passwordText!!.text.toString())
         }
         retrievePasswordText!!.setOnClickListener { retrievePassword() }
         registText!!.setOnClickListener { register() }
         wechatImage!!.setOnClickListener { loginByWeChat() }
     }
-    private fun updateUiWithUser(model: LoggedInUserView) {
-        val welcome = getString(R.string.welcome) + model.displayName
-        Toast.makeText(requireContext(), welcome, Toast.LENGTH_LONG).show()
-        val editor = requireActivity().getSharedPreferences("userInfo", Context.MODE_PRIVATE).edit()
-        editor.putString("token", Constants.token)
-        editor.commit()
-        goMainActivity()
+    private fun updateUiWithUser() {
+        requireActivity().runOnUiThread{
+            val welcome = getString(R.string.welcome) + Constants.user?.nickname
+            ToastUtil.makeText(requireContext(),welcome)
+            startActivity(Intent(requireContext(),MainActivity::class.java))
+        }
+    }
+    private fun showLoginFailed( errorString: String) {
+        requireActivity().runOnUiThread{
+            LoadDialog(requireContext())
+                .setCanCanceled(true)
+                .setResultMessage(errorString)
+                .setLoadMessage(null).show()
+        }
+    }
+    fun loginDataChanged(username: String, password: String) {
+        loginBtn!!.isEnabled = false
+        if (!isUserNameValid(username)) {
+            userText!!.error = getString(R.string.invalid_username)
+        } else if (!isPasswordValid(password)) {
+            passwordText!!.error = getString(R.string.invalid_password)
+        } else {
+            loginBtn!!.isEnabled = true
+        }
+    }
+    private fun isUserNameValid(username: String): Boolean {
+        return if (username.contains("@")) {
+            Patterns.EMAIL_ADDRESS.matcher(username).matches()
+        } else {
+            username.isNotBlank()
+        }
     }
 
-    private fun showLoginFailed( errorString: String) {
-        val appContext = context?.applicationContext ?: return
-        Toast.makeText(appContext, errorString, Toast.LENGTH_LONG).show()
+    // A placeholder password validation check
+    private fun isPasswordValid(password: String): Boolean {
+        return password.length > 5
     }
+
     /**
      * @return void
      * @Author peiyongdong
@@ -138,6 +141,33 @@ class LoginFragment : BaseFragment() {
     private fun register() {
         parentFragmentManager.beginTransaction().replace(R.id.fragment_login, RegisterFragment()).commit()
     }
+
+    /**
+     * 账号密码登录
+     */
+    private fun login(username: String, password: String){
+        var map = mutableMapOf<String,Any>()
+        map["account"] = username
+        map["password"] = password
+        RequestHelper.getInstance(requireContext()).post(Constants.loginUrl,map,"登录中..."){
+                result->
+            try {
+                var json = JSONObject(result)
+                if(json.getBoolean("success")){
+                    Constants.user = JsonUtil.toBean(json.getString("user"),User::class.java)
+                    Constants.token = json.getString("token")
+                    val editor = requireActivity().getSharedPreferences("userInfo", Context.MODE_PRIVATE).edit()
+                    editor.putString("token", Constants.token)
+                    editor.commit()
+                    updateUiWithUser()
+                }else{
+                    showLoginFailed(json.getString("msg"))
+                }
+            }catch (e:Exception){
+                showLoginFailed(e.message!!)
+            }
+        }
+    }
     private fun loginByWeChat() {
         api = WXAPIFactory.createWXAPI(requireContext(), Constants.APP_ID, true)
         api?.registerApp(Constants.APP_ID)
@@ -152,10 +182,6 @@ class LoginFragment : BaseFragment() {
             api?.sendReq(req)
         }
     }
-    private fun goMainActivity(){
-        var intent = Intent(requireActivity(),MainActivity::class.java)
-        requireActivity().startActivity(intent)
-    }
     override fun onResume() {
         super.onResume()
         val sharedPreferences: SharedPreferences = requireActivity().getSharedPreferences("userInfo", Context.MODE_PRIVATE)
@@ -164,19 +190,24 @@ class LoginFragment : BaseFragment() {
             val handler = Handler(Handler.Callback { msg: Message ->
                 val bitmap = msg.obj as Bitmap
                 headImgView!!.setImageBitmap(bitmap)
-                goMainActivity()
+                startActivity(Intent(requireActivity(),MainActivity::class.java))
                 true
             })
             user = User().parseWXUserInfo(response)
             Constants.user = user
             userText!!.setText(user!!.nickname)
             user?.headimgurl?.let {
-                HttpUtil.get(it,false){ response->
-                    val bitmap = BitmapFactory.decodeStream(response.body!!.byteStream())
-                    val message = Message()
-                    message.obj = bitmap
-                    handler.sendMessage(message)
-                }
+                HttpUtil.get(it,object :Callback{
+                    override fun onFailure(call: Call, e: IOException) {
+                        Log.e("LoginFragment",e.message,e)
+                    }
+                    override fun onResponse(call: Call, response: Response) {
+                        val bitmap = BitmapFactory.decodeStream(response.body!!.byteStream())
+                        val message = Message()
+                        message.obj = bitmap
+                        handler.sendMessage(message)
+                    }
+                })
             }
         }
     }

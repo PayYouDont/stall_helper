@@ -12,8 +12,12 @@ import com.tencent.mm.opensdk.modelmsg.SendAuth
 import com.tencent.mm.opensdk.openapi.IWXAPI
 import com.tencent.mm.opensdk.openapi.IWXAPIEventHandler
 import com.tencent.mm.opensdk.openapi.WXAPIFactory
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Response
 import org.json.JSONException
 import org.json.JSONObject
+import java.io.IOException
 
 
 class WXEntryActivity:Activity(), IWXAPIEventHandler{
@@ -47,7 +51,7 @@ class WXEntryActivity:Activity(), IWXAPIEventHandler{
     }
 
     override fun onReq(p0: BaseReq?) {
-        TODO("Not yet implemented")
+
     }
     private fun getAccessToken(code: String) {
         /**
@@ -67,33 +71,46 @@ class WXEntryActivity:Activity(), IWXAPIEventHandler{
             .append(code)
             .append("&grant_type=authorization_code")
         Log.d("urlurl", loginUrl.toString())
-        HttpUtil.get(loginUrl.toString()) {response ->
-            val responseInfo = response.body!!.string()
-            Log.d(TAG, "onResponse: Success")
-            var access: String? = null
-            var openId: String? = null
-            //用json去解析返回来的access和token值
-            try {
-                val jsonObject = JSONObject(responseInfo)
-                access = jsonObject.getString("access_token")
-                openId = jsonObject.getString("openid")
-                Log.d(TAG, "onResponse:$access  $openId")
-            } catch (e: JSONException) {
-                e.printStackTrace()
+        HttpUtil.get(loginUrl.toString(), object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG,e.message,e)
             }
-            getUserInfo(access, openId)}
+
+            override fun onResponse(call: Call, response: Response) {
+                val responseInfo = response.body!!.string()
+                Log.d(TAG, "onResponse: Success")
+                var access: String? = null
+                var openId: String? = null
+                //用json去解析返回来的access和token值
+                try {
+                    val jsonObject = JSONObject(responseInfo)
+                    access = jsonObject.getString("access_token")
+                    openId = jsonObject.getString("openid")
+                    Log.d(TAG, "onResponse:$access  $openId")
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+                getUserInfo(access, openId)
+            }
+        })
     }
 
     //如果请求成功，我们通过JSON解析获取access和token值，再通过getUserInfo(access, openId)方法获取用户信息
     private fun getUserInfo(access: String?, openid: String?) {
         val getUserInfoUrl ="https://api.weixin.qq.com/sns/userinfo?access_token=$access&openid=$openid"
-        HttpUtil.get(getUserInfoUrl) { response ->
-            val responseInfo = response.body!!.string()
-            //用SharedPreference来缓存字符串
-            val editor = getSharedPreferences("userInfo", Context.MODE_PRIVATE).edit()
-            editor.putString("responseInfo", responseInfo)
-            editor.commit()
-            finish()
-        }
+        HttpUtil.get(getUserInfoUrl,object :Callback{
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG,e.message,e)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val responseInfo = response.body!!.string()
+                //用SharedPreference来缓存字符串
+                val editor = getSharedPreferences("userInfo", Context.MODE_PRIVATE).edit()
+                editor.putString("responseInfo", responseInfo)
+                editor.commit()
+                finish()
+            }
+        })
     }
 }

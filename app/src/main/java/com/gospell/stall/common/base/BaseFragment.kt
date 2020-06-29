@@ -5,6 +5,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.gospell.stall.common.annotation.InjectView
 import com.gospell.stall.util.ReflectUtil
@@ -26,6 +28,20 @@ abstract class BaseFragment: Fragment() {
     }
 
     protected abstract fun onCreateView()
+    fun jumpFragment(containerViewId: Int,targetFragment:Fragment,tag:String?){
+        parentFragmentManager.beginTransaction().replace(containerViewId, targetFragment,tag).commit()
+    }
+    fun jumpFragment(containerViewId: Int,targetFragment:Fragment){
+        jumpFragment(containerViewId,targetFragment,null)
+    }
+    fun TextView.checkBlank(message: String): String? {
+        val text = this.text.toString()
+        if (text.isBlank()||text=="") {
+            Toast.makeText (requireContext (), message, Toast.LENGTH_SHORT).show ()
+            return null
+        }
+        return text
+    }
     /**
      * @Author peiyongdong
      * @Description ( 初始化RootView注解 )
