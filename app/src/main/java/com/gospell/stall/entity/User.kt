@@ -26,7 +26,7 @@ open class User{
 
     //店铺信息
     var stallInfo: StallInfo? = null
-    open fun parseWXUserInfo(response: String?): User? {
+    open fun parseWXUserInfo(response: String?): User{
         try {
             val jsonObject = JSONObject(response)
 

@@ -40,31 +40,43 @@ class LoginFragment : BaseFragment() {
     private var root: View? = null
 
     @InjectView(id = R.id.headImg)
-    private val headImgView: CircleImageView? = null
+    private lateinit var headImg: CircleImageView
 
     @InjectView(id = R.id.login_user)
-    private val userText: EditText? = null
+    private lateinit var userText: EditText
 
     @InjectView(id = R.id.login_password)
-    private val passwordText: EditText? = null
+    private lateinit var passwordText: EditText
 
     @InjectView(id = R.id.login_remember_password)
-    private val rememberCheckBox: CheckBox? = null
+    private lateinit var rememberCheckBox: CheckBox
 
     @InjectView(id = R.id.login_retrieve_password)
-    private val retrievePasswordText: TextView? = null
+    private lateinit var retrievePasswordText: TextView
 
     @InjectView(id = R.id.login_loginBtn)
-    private val loginBtn: Button? = null
+    private lateinit var loginBtn: Button
 
     @InjectView(id = R.id.login_go_register)
-    private val registText: TextView? = null
+    private lateinit var registText: TextView
 
     @InjectView(id = R.id.login_wechat)
-    private val wechatImage: ImageView? = null
-    private var api: IWXAPI? = null
-    private var user: User? = null
+    private lateinit var wechatImage: ImageView
+    private lateinit var api: IWXAPI
+    private lateinit var user: User
     override fun onCreateView() {
+        var sharedPreferences = requireActivity().getSharedPreferences("userInfo", Context.MODE_PRIVATE)
+        var headImgUrl = sharedPreferences.getString("headimgurl", "")
+        if (!headImgUrl.isNullOrBlank()){
+            if(headImgUrl.indexOf("http")==-1){
+                headImgUrl = Constants.baseUrl + headImgUrl
+            }
+            RequestHelper.getInstance(requireContext()).loadImage(headImgUrl){bitmap ->
+                requireActivity().runOnUiThread {
+                    headImg.setImageBitmap(bitmap)
+                }
+            }
+        }
         val afterTextChangedListener = object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
                 // ignore
@@ -76,14 +88,14 @@ class LoginFragment : BaseFragment() {
                 loginDataChanged(userText!!.text.toString(),passwordText!!.text.toString() )
             }
         }
-        userText!!.addTextChangedListener(afterTextChangedListener)
-        passwordText!!.addTextChangedListener(afterTextChangedListener)
-        loginBtn!!.setOnClickListener {
-            login(userText!!.text.toString(), passwordText!!.text.toString())
+        userText.addTextChangedListener(afterTextChangedListener)
+        passwordText.addTextChangedListener(afterTextChangedListener)
+        loginBtn.setOnClickListener {
+            login(userText.text.toString(), passwordText!!.text.toString())
         }
-        retrievePasswordText!!.setOnClickListener { retrievePassword() }
-        registText!!.setOnClickListener { register() }
-        wechatImage!!.setOnClickListener { loginByWeChat() }
+        retrievePasswordText.setOnClickListener { retrievePassword() }
+        registText.setOnClickListener { register() }
+        wechatImage.setOnClickListener { loginByWeChat() }
     }
     private fun updateUiWithUser() {
         requireActivity().runOnUiThread{
@@ -101,13 +113,13 @@ class LoginFragment : BaseFragment() {
         }
     }
     fun loginDataChanged(username: String, password: String) {
-        loginBtn!!.isEnabled = false
+        loginBtn.isEnabled = false
         if (!isUserNameValid(username)) {
-            userText!!.error = getString(R.string.invalid_username)
+            userText.error = getString(R.string.invalid_username)
         } else if (!isPasswordValid(password)) {
-            passwordText!!.error = getString(R.string.invalid_password)
+            passwordText.error = getString(R.string.invalid_password)
         } else {
-            loginBtn!!.isEnabled = true
+            loginBtn.isEnabled = true
         }
     }
     private fun isUserNameValid(username: String): Boolean {
@@ -186,28 +198,31 @@ class LoginFragment : BaseFragment() {
         super.onResume()
         val sharedPreferences: SharedPreferences = requireActivity().getSharedPreferences("userInfo", Context.MODE_PRIVATE)
         val response = sharedPreferences.getString("responseInfo", "")
-        if (response!!.isNotEmpty()) {
+        if (response.isNotEmpty()) {
             val handler = Handler(Handler.Callback { msg: Message ->
                 val bitmap = msg.obj as Bitmap
-                headImgView!!.setImageBitmap(bitmap)
+                headImg.setImageBitmap(bitmap)
                 startActivity(Intent(requireActivity(),MainActivity::class.java))
                 true
             })
             user = User().parseWXUserInfo(response)
             Constants.user = user
-            userText!!.setText(user!!.nickname)
-            user?.headimgurl?.let {
-                HttpUtil.get(it,object :Callback{
-                    override fun onFailure(call: Call, e: IOException) {
-                        Log.e("LoginFragment",e.message,e)
-                    }
-                    override fun onResponse(call: Call, response: Response) {
-                        val bitmap = BitmapFactory.decodeStream(response.body!!.byteStream())
-                        val message = Message()
-                        message.obj = bitmap
-                        handler.sendMessage(message)
-                    }
-                })
+            userText.setText(user.nickname)
+            user.headimgurl.let {
+                if (it != null) {
+                    HttpUtil.get(it,object :Callback{
+                        override fun onFailure(call: Call, e: IOException) {
+                            Log.e("LoginFragment",e.message,e)
+                        }
+
+                        override fun onResponse(call: Call, response: Response) {
+                            val bitmap = BitmapFactory.decodeStream(response.body!!.byteStream())
+                            val message = Message()
+                            message.obj = bitmap
+                            handler.sendMessage(message)
+                        }
+                    })
+                }
             }
         }
     }

@@ -6,15 +6,21 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
+import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.gospell.stall.common.util.NetworkUtil
+import com.gospell.stall.entity.AppVersion
 import com.gospell.stall.entity.User
 import com.gospell.stall.helper.ActivityTack
 import com.gospell.stall.helper.RequestHelper
 import com.gospell.stall.ui.login.LoginActivity
+import com.gospell.stall.ui.util.DhUtil
+import com.gospell.stall.ui.util.ToastUtil
+import com.gospell.stall.ui.util.VersionUtil
+import com.gospell.stall.ui.view.LoadDialog
 import com.gospell.stall.util.JsonUtil
 import org.json.JSONObject
 
@@ -26,7 +32,6 @@ class SplashActivity : AppCompatActivity() {
     private lateinit var fullscreenContent: TextView
     private lateinit var fullscreenContentControls: LinearLayout
     private val hideHandler = Handler()
-
     @SuppressLint("InlinedApi")
     private val hidePart2Runnable = Runnable {
         fullscreenContent.systemUiVisibility =
@@ -55,6 +60,7 @@ class SplashActivity : AppCompatActivity() {
 
         fullscreenContentControls = findViewById(R.id.fullscreen_content_controls)
         ActivityTack.getInstanse()?.addActivity(this)
+        netCheck()
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
@@ -84,16 +90,37 @@ class SplashActivity : AppCompatActivity() {
     }
     override fun onResume() {
         super.onResume()
-        netCheck()
+        //netCheck()
     }
 
     private fun netCheck() {
         if (NetworkUtil.checkEnable(this)) {
-            login()
+            //login()
+            checkVersion()
         } else {
             Toast.makeText(this,R.string.network_error,Toast.LENGTH_SHORT).show() //网络异常，请检查网络
         }
     }
+    //检查是否有新版本
+    private fun checkVersion(){
+        var versionCode = VersionUtil.getVersion(this)
+        RequestHelper.getInstance(this).get(Constants.lastVersionUrl,null,null){result->
+            runOnUiThread {
+                var json = JSONObject(result)
+                if(json.getBoolean("success")){
+                    var appVersion = JsonUtil.toBean(json.getString("data"),AppVersion::class.java)
+                    if(appVersion.code!! > versionCode){
+                        toDownLoadApk(appVersion)
+                    }else{
+                        login()
+                    }
+                }else{
+                    ToastUtil.makeText(this,"检查更新错误！errorMsg:${json.getString("msg")}")
+                }
+            }
+        }
+    }
+    //登录
     private fun login(){
         val sharedPreferences = getSharedPreferences("userInfo", Context.MODE_PRIVATE)
         val token = sharedPreferences.getString("token", "")
@@ -109,6 +136,7 @@ class SplashActivity : AppCompatActivity() {
                     Constants.token = json.getString("token")
                     val editor = sharedPreferences.edit()
                     editor.putString("token", token)
+                    editor.putString("headimgurl", Constants.user?.headimgurl)
                     editor.apply()
                     intent = Intent(this,MainActivity::class.java)
                 }else{
@@ -118,6 +146,41 @@ class SplashActivity : AppCompatActivity() {
             }
         }else{
             startActivity(Intent(this,LoginActivity::class.java))
+        }
+    }
+    private fun toDownLoadApk(appVersion:AppVersion){
+        if(appVersion.forcedUpdate!!){
+            downloadApk(appVersion)
+        }else{
+            LoadDialog(this)
+                .setTitle("发现新版本,是否下载最新版本？")
+                .setResultMessage(appVersion.log.toString())
+                .setCancel("取消")
+                .setCancelListener{ _, dialog ->
+                    dialog.dismiss()
+                    login()
+                }
+                .setConfirm("下载")
+                .setConfirmListener{ _, dialog ->
+                    dialog.dismiss()
+                    downloadApk(appVersion)
+                }
+                .setSize(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT)
+                .show()
+        }
+    }
+    private fun downloadApk(appVersion:AppVersion){
+        var url = Constants.versionDownloadUrl+appVersion.code
+        val apkName = "地摊_V" + appVersion.name + ".apk"
+        RequestHelper.getInstance(this)
+            .downloadFile(url,"正在下载更新包",apkName,appVersion.apkSize!!){apkFile ->
+            runOnUiThread {
+                if(apkFile!=null&&apkFile.length()==appVersion.apkSize){
+                    VersionUtil.installApk(this,apkFile)
+                }else{
+                    ToastUtil.makeText(this,"获取更新包错误，更新失败！")
+                }
+            }
         }
     }
 }

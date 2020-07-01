@@ -1,12 +1,14 @@
 package com.gospell.stall.util
 
-import android.util.Log
+import com.amap.api.mapcore.util.`is`
 import okhttp3.*
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
-import java.io.IOException
+import java.io.FileOutputStream
+import java.io.InputStream
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
+
 
 class HttpUtil {
     companion object {
@@ -75,6 +77,19 @@ class HttpUtil {
             var fileBody = file.asRequestBody(contentType)
             var multipartBody = MultipartBody.Builder().addFormDataPart("file", file.name, fileBody).build()
             val request = Request.Builder().post(multipartBody).url(url!!).build()
+            val client = OkHttpClient().newBuilder().readTimeout(30, TimeUnit.SECONDS).build()
+            val call = client.newCall(request)
+            call.enqueue(callback)
+        }
+
+        /**
+         * 下载文件，downloadLength：已下载文件长度，contentLength：文件总长度
+         */
+        fun downloadFile(url: String,downloadLength:Long,callback: Callback){
+            val request = Request.Builder() //确定下载的范围,添加此头,则服务器就可以跳过已经下载好的部分
+                .addHeader("RANGE", "bytes=$downloadLength-")
+                .url(url)
+                .build()
             val client = OkHttpClient().newBuilder().readTimeout(30, TimeUnit.SECONDS).build()
             val call = client.newCall(request)
             call.enqueue(callback)

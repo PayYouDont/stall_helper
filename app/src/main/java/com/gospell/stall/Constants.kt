@@ -26,5 +26,11 @@ class Constants {
         const val getNearStallUrl = baseUrl+"app/user/near"
         //头像上传请求路径
         const val avatarUploadUrl = baseUrl+"app/user/upload"
+        //获取最新版本信息
+        const val lastVersionUrl = baseUrl+"app/version/last"
+        //获取指定版本信息
+        const val versionUrl = baseUrl+"app/version/get?code="
+        //获取指定版本信息
+        const val versionDownloadUrl = baseUrl+"app/version/download?code="
     }
 }

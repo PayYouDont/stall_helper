@@ -92,44 +92,34 @@ class MapActivity : AppCompatActivity(),LocationSource, AMapLocationListener {
     private fun position(location: Location?) {
         //从location对象中获取经纬度信息，地址描述信息，建议拿到位置之后调用逆地理编码接口获取
         if (Constants.user != null && location != null) {
-            var latitude = Constants.user?.latitude
-            var longitude = Constants.user?.longitude
-            var lat = String.format("%.4f", location.latitude).toDouble()
-            var log = String.format("%.4f", location.longitude).toDouble()
-            if (latitude != lat || longitude != log || markers.isNullOrEmpty()) {
-                val visibleRegion = aMap?.projection!!.visibleRegion
-                val latLngBounds = visibleRegion.latLngBounds //由可视区域的四个顶点形成的经纬度范围
-                southwest = latLngBounds.southwest //西南角坐标
-                northeast = latLngBounds.northeast //东北角坐标
-                Constants.user?.latitude = lat
-                Constants.user?.longitude = log
-                var map = mutableMapOf<String, Any>()
-                map["id"] = Constants.user?.id.toString()
-                map["latitude"] = Constants.user?.latitude.toString()
-                map["longitude"] = Constants.user?.longitude.toString()
-                RequestHelper.getInstance(this)
-                    .post(Constants.updateUrl, map, "定位中...") { result ->
-                        var json = JSONObject(result)
-                        runOnUiThread {
-                            if (json.getBoolean("success")) {
-                                if (markers.isNullOrEmpty()) {//附近摊位初始化时只加载一次
-                                    initNearUsers()
-                                }
-                            } else {
-                                ToastUtil.makeText(this, "上传位置信息失败!")
-                            }
+            Constants.user?.latitude = location.latitude
+            Constants.user?.longitude = location.longitude
+            var map = mutableMapOf<String, Any>()
+            map["id"] = Constants.user?.id.toString()
+            map["latitude"] = Constants.user?.latitude.toString()
+            map["longitude"] = Constants.user?.longitude.toString()
+            RequestHelper.getInstance(this)
+                .post(Constants.updateUrl, map, "定位中...") { result ->
+                    var json = JSONObject(result)
+                    runOnUiThread {
+                        if (json.getBoolean("success")) {
+                            val visibleRegion = aMap?.projection!!.visibleRegion
+                            val latLngBounds = visibleRegion.latLngBounds //由可视区域的四个顶点形成的经纬度范围
+                            initNearUsers(latLngBounds.southwest,latLngBounds.northeast)
+                        } else {
+                            ToastUtil.makeText(this, "上传位置信息失败!")
                         }
                     }
-            }
+                }
         }
     }
 
-    private fun initNearUsers() {
+    private fun initNearUsers(southwest: LatLng,northeast: LatLng) {
         var map = mutableMapOf<String, Any>()
-        map["southwestLat"] = southwest?.latitude.toString()
-        map["southwestLng"] = southwest?.longitude.toString()
-        map["northeastLat"] = northeast?.latitude.toString()
-        map["northeastLng"] = northeast?.longitude.toString()
+        map["southwestLat"] = southwest.latitude.toString()
+        map["southwestLng"] = southwest.longitude.toString()
+        map["northeastLat"] = northeast.latitude.toString()
+        map["northeastLng"] = northeast.longitude.toString()
         RequestHelper.getInstance(this)
             .post(Constants.getNearStallUrl, map, "正在获取周围摊位...") { result ->
                 var json = JSONObject(result)
@@ -137,13 +127,15 @@ class MapActivity : AppCompatActivity(),LocationSource, AMapLocationListener {
                     var users = JsonUtil.toList(json.getString("data"), User::class.java)
                     for (user in users!!) {
                         var stallInfo = user.stallInfo
-                        var latLng = LatLng(user.latitude!!, user.longitude!!)
-                        var marker = MarkerOptions().position(latLng).title("摊位名称:${stallInfo?.name}").snippet("摊位信息:${stallInfo?.content}")
-                        marker.icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(resources,R.drawable.marker_stall)))
-                        aMap!!.addMarker(marker)
+                        if(stallInfo?.latitude!=null&&stallInfo?.longitude!=null){
+                            var latLng = LatLng(stallInfo?.latitude!!, stallInfo?.longitude!!)
+                            var marker = MarkerOptions().position(latLng).title("摊位名称:${stallInfo?.name}").snippet("摊位信息:${stallInfo?.content}")
+                            marker.icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(resources,R.drawable.marker_stall)))
+                            aMap!!.addMarker(marker)
+                        }
                     }
                 }else{
-                    runOnUiThread {
+                    this.runOnUiThread {
                         var msg = json.getString("msg")
                         LoadDialog(this).setResultMessage("获取周围摊位信息失败！$msg")
                     }

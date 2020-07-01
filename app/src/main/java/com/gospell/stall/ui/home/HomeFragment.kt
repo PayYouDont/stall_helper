@@ -44,14 +44,11 @@ class HomeFragment : BaseFragment(), LocationSource, AMapLocationListener,AMap.O
     //自定义marker相关
     private var oldMarker: Marker? = null
     @InjectView(layout = R.layout.fragment_home)
-    private var root: View? = null;
+    private lateinit var root: View
 
     @InjectView(id = R.id.map)
     private var mMapView: MapView? = null
     override fun onCreateView() {
-        //在activity执行onCreate时执行mMapView.onCreate(savedInstanceState)，创建地图
-        mMapView!!.onCreate(savedInstanceState)
-        aMap = mMapView?.map
         permissionHelper = PermissionHelper(this)
         permissionHelper!!.check(
             Manifest.permission.ACCESS_FINE_LOCATION
@@ -65,6 +62,9 @@ class HomeFragment : BaseFragment(), LocationSource, AMapLocationListener,AMap.O
         }.run()
     }
     private fun initMap() {
+        //在activity执行onCreate时执行mMapView.onCreate(savedInstanceState)，创建地图
+        mMapView!!.onCreate(savedInstanceState)
+        aMap = mMapView?.map
         //设置地图的放缩级别
         aMap?.moveCamera(CameraUpdateFactory.zoomTo(12f))
         // 设置定位监听
@@ -128,10 +128,12 @@ class HomeFragment : BaseFragment(), LocationSource, AMapLocationListener,AMap.O
                     var users = JsonUtil.toList(json.getString("data"), User::class.java)
                     for (user in users!!) {
                         var stallInfo = user.stallInfo
-                        var latLng = LatLng(user.latitude!!, user.longitude!!)
-                        var marker = MarkerOptions().position(latLng).title("摊位名称:${stallInfo?.name}").snippet("摊位信息:${stallInfo?.content}")
-                        marker.icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(resources,R.drawable.marker_stall)))
-                        aMap!!.addMarker(marker)
+                        if(stallInfo?.latitude!=null&&stallInfo?.longitude!=null){
+                            var latLng = LatLng(stallInfo?.latitude!!, stallInfo?.longitude!!)
+                            var marker = MarkerOptions().position(latLng).title("摊位名称:${stallInfo?.name}").snippet("摊位信息:${stallInfo?.content}")
+                            marker.icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(resources,R.drawable.marker_stall)))
+                            aMap!!.addMarker(marker)
+                        }
                     }
                 }else{
                     requireActivity().runOnUiThread {
@@ -159,7 +161,7 @@ class HomeFragment : BaseFragment(), LocationSource, AMapLocationListener,AMap.O
         super.onResume()
         //在activity执行onResume时执行mMapView.onResume ()，重新绘制加载地图
         mMapView?.onResume()
-        initMap()
+        //initMap()
     }
 
     override fun onPause() {

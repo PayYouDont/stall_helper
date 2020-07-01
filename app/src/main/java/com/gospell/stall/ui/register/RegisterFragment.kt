@@ -1,6 +1,7 @@
 package com.gospell.stall.ui.register
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -157,42 +158,6 @@ class RegisterFragment : BaseFragment(), View.OnClickListener {
             Toast.makeText(requireContext(), "请选择头像", Toast.LENGTH_SHORT).show()
             return
         }
-        /*"image/jpg".toMediaTypeOrNull()?.let {
-            RequestHelper.getInstance(requireContext()).updateFile(Constants.avatarUploadUrl, it,avatarFile!!, "头像上传中...") { result ->
-                try {
-                    requireActivity().runOnUiThread {
-                        var json = JSONObject(result)
-                        if (json!!.getBoolean("success")) {
-                            var url = json.getString("data")
-                            param["headimgurl"] = url
-                            RequestHelper.getInstance(requireContext()).post(Constants.registerUrl, param, "注册中...") { result ->
-                                var json = JSONObject(result)
-                                requireActivity().runOnUiThread {
-                                    if (json!!.getBoolean("success")) {
-                                        LoadDialog(requireContext())
-                                            .setResultMessage("注册成功！")
-                                            .setConfirm("去登录")
-                                            .setConfirmListener { _, dialog ->
-                                                dialog.dismiss()
-                                                requireActivity().startActivity(Intent(requireActivity(),LoginActivity::class.java))
-                                            }.show()
-                                    } else {
-                                        LoadDialog(requireContext())
-                                            .setCanCanceled(true)
-                                            .setLoadMessage(null)
-                                            .setResultMessage(json.getString("msg"))
-                                            .show()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e("RegisterFragment", e.message, e)
-                    ToastUtil.makeText(requireContext(), e.message!!)
-                }
-            }
-        }*/
         RequestHelper.getInstance(requireContext()).uploadImage(avatarFile!!, "头像上传中..."){fileUploadedUrl->
             requireActivity().runOnUiThread {
                 param["headimgurl"] = fileUploadedUrl
@@ -200,6 +165,9 @@ class RegisterFragment : BaseFragment(), View.OnClickListener {
                     var json = JSONObject(result)
                     requireActivity().runOnUiThread {
                         if (json!!.getBoolean("success")) {
+                            val editor = requireActivity().getSharedPreferences("userInfo", Context.MODE_PRIVATE).edit()
+                            editor.putString("headimgurl", fileUploadedUrl)
+                            editor.commit()
                             LoadDialog(requireContext())
                                 .setResultMessage("注册成功！")
                                 .setConfirm("去登录")

@@ -7,6 +7,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import com.gospell.stall.util.FileUtil
 import com.yalantis.ucrop.UCrop
 import java.io.File
 
@@ -45,7 +46,7 @@ class ChoosePicDialog : ItemDialog {
                     if (file.exists()) {
                         file.delete()
                     }
-                    val fileUri = getUriByOsVersion(file)
+                    val fileUri = FileUtil.getUriByOsVersion(fragment.requireContext(),file)
                     openCameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri)
                     openCameraIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     openCameraIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
@@ -86,20 +87,20 @@ class ChoosePicDialog : ItemDialog {
     }
 
     //获取uri
-    private fun getUriByOsVersion(file: File): Uri {
+    /*private fun getUriByOsVersion(file: File): Uri {
         val currentApiVersion = android.os.Build.VERSION.SDK_INT
         return if (currentApiVersion < 24) {
             Uri.fromFile(file)
         } else {
             FileProvider.getUriForFile(fragment.requireContext(), "com.gospell.stall.provider", file)
         }
-    }
+    }*/
     fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?){
         if (resultCode == Activity.RESULT_OK) {
             when (requestCode) {
                 // 对拍照返回的图片进行裁剪处理
                 TAKE_PICTURE -> {
-                    val imgUriSel = getUriByOsVersion(getAvatarFile(avatarOriginFileName))
+                    val imgUriSel = FileUtil.getUriByOsVersion(fragment.requireContext(),getAvatarFile(avatarOriginFileName))
                     cutImageByuCrop(imgUriSel)
                 }
                 // 对在图库选择的图片进行裁剪处理

@@ -31,25 +31,25 @@ import java.io.FileNotFoundException
 
 class StallInfoFragment : BaseFragment() {
     @InjectView(layout = R.layout.fragment_stall_info)
-    private var root: View? = null
+    private lateinit var root: View
     //店铺头像
     @InjectView(id = R.id.headImg)
-    private var headImg:CircleImageView?=null
+    private lateinit var headImg:CircleImageView
     //店铺名称
     @InjectView(id = R.id.name_text)
-    private var nameText: EditText? = null
+    private lateinit var nameText: EditText
 
     //店铺简介
     @InjectView(id = R.id.brief_text)
-    private var briefText: EditText? = null
+    private lateinit var briefText: EditText
 
     @InjectView(id = R.id.position_text)
-    private var positionText: TextView? = null
-    private var positionTextValue: String? = null
+    private lateinit var positionText: TextView
+    private lateinit var positionTextValue: String
 
     //保存按钮
     @InjectView(id = R.id.save_btn)
-    private var saveButton: Button? = null
+    private lateinit var saveButton: Button
     private val REQUEST_CODE = 10
     private lateinit var picDialog:ChoosePicDialog
     private lateinit var logoFile: File
@@ -122,8 +122,9 @@ class StallInfoFragment : BaseFragment() {
                 }
                 .show()
         }
-        saveButton?.isEnabled = false
-        saveButton?.setOnClickListener { saveStall() }
+        saveButton.isEnabled = false
+        saveButton.setOnClickListener { saveStall() }
+        setRadiusButton(saveButton)
     }
     private fun updateLogo(){
         RequestHelper.getInstance(requireContext()).uploadImage(logoFile,"logo上传中..."){ fileUploadedUrl ->

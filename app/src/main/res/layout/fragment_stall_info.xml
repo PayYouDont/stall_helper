@@ -4,18 +4,18 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorBackground"
     tools:context=".ui.register.RegisterFragment">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-        <!--<include layout="@layout/title_bar_layout"/>-->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:gravity="center"
-            android:background="#1BCC87">
+            android:background="@color/colorImageBackground">
             <com.gospell.stall.ui.view.CircleImageView
                 android:id="@+id/headImg"
                 android:layout_width="150dp"
@@ -27,60 +27,56 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@drawable/ic_launcher"/>
         </LinearLayout>
-        <LinearLayout
+        <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="2"
-            android:padding="20dp"
-            android:orientation="vertical">
-            <EditText
-                android:id="@+id/name_text"
+            android:layout_weight="2">
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:background="@drawable/border_all"
-                android:drawableLeft="@drawable/ic_login_user"
-                android:drawablePadding="20dp"
-                android:hint="摊位名称"
-                android:paddingLeft="10dp"
-                android:layout_marginTop="20dp"/>
-            <EditText
-                android:id="@+id/brief_text"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:background="@drawable/border_all"
-                android:drawableLeft="@drawable/ic_login_password"
-                android:drawablePadding="20dp"
-                android:hint="店铺简介"
-                android:paddingLeft="10dp"
-                android:layout_marginTop="20dp"/>
-           <!-- <Spinner
-                android:id="@+id/type_spinner"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:background="@drawable/border_all"
-                android:drawableLeft="@drawable/ic_login_user"
-                android:drawablePadding="20dp"
-                android:paddingLeft="10dp"
-                android:layout_marginTop="20dp"/>-->
-            <TextView
-                android:id="@+id/position_text"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:background="@drawable/border_all"
-                android:drawableLeft="@drawable/ic_login_password"
-                android:drawablePadding="20dp"
-                android:gravity="left|center"
-                android:hint="0.0,0.0"
-                android:paddingLeft="10dp"
-                android:layout_marginTop="20dp"/>
-            <Button
-                android:id="@+id/save_btn"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="20dp"
-                android:text="保存"
-                android:textColor="#fff"
-                android:background="#1BCC87"/>
-        </LinearLayout>
+                android:layout_height="wrap_content"
+                android:padding="20dp"
+                android:orientation="vertical">
+                <EditText
+                    android:id="@+id/name_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:textColor="@color/colorTextDark"
+                    android:background="@drawable/border_all"
+                    android:drawableLeft="@drawable/icon_name"
+                    android:drawablePadding="20dp"
+                    android:hint="摊位名称"
+                    android:paddingLeft="10dp"
+                    android:layout_marginTop="20dp"/>
+                <TextView
+                    android:id="@+id/position_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/border_all"
+                    android:drawableLeft="@drawable/icon_location_marker"
+                    android:drawablePadding="20dp"
+                    android:gravity="left|center"
+                    android:hint="unkown"
+                    android:paddingLeft="10dp"
+                    android:layout_marginTop="20dp"/>
+                <EditText
+                    android:id="@+id/brief_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:textColor="@color/colorTextDark"
+                    android:background="@drawable/border_all"
+                    android:drawablePadding="20dp"
+                    android:hint="店铺简介"
+                    android:paddingLeft="10dp"
+                    android:layout_marginTop="20dp"/>
+                <Button
+                    android:id="@+id/save_btn"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="20dp"
+                    android:text="保存"
+                    android:textColor="#fff"
+                    android:background="#1BCC87"/>
+            </LinearLayout>
+        </ScrollView>
     </LinearLayout>
 </FrameLayout>

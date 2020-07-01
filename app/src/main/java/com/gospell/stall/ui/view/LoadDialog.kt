@@ -7,10 +7,8 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
 import android.view.View
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.Space
-import android.widget.TextView
+import android.view.WindowManager
+import android.widget.*
 import com.github.ybq.android.spinkit.SpinKitView
 import com.github.ybq.android.spinkit.sprite.Sprite
 import com.gospell.stall.R
@@ -22,7 +20,7 @@ import com.gospell.stall.util.ReflectUtil
 class LoadDialog(context: Context) : Dialog(context, R.style.CustomDialog) {
     //整体layout
     @InjectView(id = R.id.main_layout)
-    var mainLayout: LinearLayout? = null
+    lateinit var mainLayout: LinearLayout
 
     //显示的标题
     @InjectView(id = R.id.load_title)
@@ -32,9 +30,16 @@ class LoadDialog(context: Context) : Dialog(context, R.style.CustomDialog) {
     @InjectView(id = R.id.load_message)
     var loadMessageText: TextView? = null
 
+    @InjectView(id=R.id.load_result_layout)
+    lateinit var loadResultLayout:LinearLayout
+
     //加载图片
     @InjectView(id = R.id.load_view)
     var spinKitView: SpinKitView? = null
+
+    //加载结果描述
+    @InjectView(id = R.id.load_result_scroll)
+    var resultMessageScrollView: ScrollView? = null
 
     //加载结果描述
     @InjectView(id = R.id.load_result_message)
@@ -59,20 +64,32 @@ class LoadDialog(context: Context) : Dialog(context, R.style.CustomDialog) {
     var title: String? = null
     var loadMessage: String? = null
     var resultMessage: String? = null
-
     //sprite类型参考：https://github.com/ybq/Android-SpinKit
-    var sprite: Sprite? = null
-    var width: Float = 190f
-    var height: Float = 195f
+    private var sprite: Sprite? = null
+    var width: Int = DhUtil.dip2px(context,190f)
+    var height: Int = DhUtil.dip2px(context,195f)
+    var maxHeight:Int = DhUtil.dip2px(context,400f)
     var radius: Float = 5f
     var backgroundColor: Int = Color.parseColor("#99000000")
     var canCanceled = false
     var cancel: String? = null
     var confirm: String? = null
     //取消按钮事件
-    var cancelListener: ((Button, LoadDialog) -> Unit)? = null
+    private var cancelListener: ((Button, LoadDialog) -> Unit)? = null
     //确定按钮事件
-    var confirmListener: ((Button, LoadDialog) -> Unit)? = null
+    private var confirmListener: ((Button, LoadDialog) -> Unit)? = null
+
+    /**
+     * 自定义加载View
+     */
+    private var loadViewResourceId:Int?=null
+    //自定义加载View回调
+    private var loadViewListener: ((View, LoadDialog) -> Unit)? = null
+    //自定义进度条，需要当前窗口中包含该进度条时才能显示
+    private var progressBar:ProgressBar?=null
+    //当自定义进度条存在时，更新进度条时其他需要更新的view列表
+    private var progressViewList:ArrayList<View>?=null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.dialog_load_layout)
@@ -105,6 +122,7 @@ class LoadDialog(context: Context) : Dialog(context, R.style.CustomDialog) {
     private fun refreshView() {
         if (!title.isNullOrBlank()) {
             titleText?.text = title
+            titleText?.visibility = View.VISIBLE
         } else {
             titleText?.visibility = View.GONE
         }
@@ -125,10 +143,19 @@ class LoadDialog(context: Context) : Dialog(context, R.style.CustomDialog) {
             resultMessageText?.visibility = View.GONE
             spinKitView?.visibility = View.VISIBLE
         }
+        if(loadViewResourceId!=null){
+            spinKitView?.visibility = View.GONE
+            createLoadDialog()
+        }
         setButtons()
         setSize()
         setCanceledOnTouchOutside(canCanceled)
         setBackground()
+    }
+
+    fun setTitle(title: String): LoadDialog {
+        this.title = title
+        return this
     }
 
     fun setSprite(sprite: Sprite): LoadDialog {
@@ -136,7 +163,7 @@ class LoadDialog(context: Context) : Dialog(context, R.style.CustomDialog) {
         return this
     }
 
-    fun setSize(width: Float, height: Float): LoadDialog {
+    fun setSize(width: Int, height: Int): LoadDialog {
         this.width = width
         this.height = height
         return this
@@ -145,8 +172,8 @@ class LoadDialog(context: Context) : Dialog(context, R.style.CustomDialog) {
     private fun setSize() {
         var param = window.attributes
         param.gravity = Gravity.CENTER
-        param.width = DhUtil.dip2px(context, width)
-        param.height = DhUtil.dip2px(context, height)
+        param.width = width
+        param.height = height
         window.attributes = param
     }
 
@@ -238,5 +265,62 @@ class LoadDialog(context: Context) : Dialog(context, R.style.CustomDialog) {
             DhUtil.dip2px(context, 0.2f),
             backgroundColor
         )
+    }
+
+    /**
+     * 一下为自定义加载窗口方法
+     */
+    fun createLoadDialog(loadViewResourceId:Int):LoadDialog{
+        this.loadViewResourceId = loadViewResourceId
+        return this
+    }
+    fun setLoadViewListener(loadViewListener:((View, LoadDialog) -> Unit)?):LoadDialog{
+        this.loadViewListener = loadViewListener
+        return this
+    }
+    fun setProgressBar(progressBar:ProgressBar,progressViewList:ArrayList<View>?):LoadDialog{
+        this.progressBar = progressBar
+        this.progressViewList = progressViewList
+        return this
+    }
+    fun setProgress(progress:Int,progressListener: ((ArrayList<View>) -> Unit)?):LoadDialog{
+        if(this.progressBar!=null){
+            this.progressBar!!.progress = progress
+        }
+        if (progressViewList!=null&&progressListener!=null){
+            progressListener.invoke(progressViewList!!)
+        }
+        return this
+    }
+    private fun createLoadDialog(){
+        mainLayout.setPadding(0,0,0,0)
+        var view = View.inflate(context,loadViewResourceId!!,null)
+        loadResultLayout.addView(view)
+        if(loadViewListener!=null){
+            loadViewListener!!.invoke(view,this)
+        }
+    }
+
+    /**
+     * 创建默认带进度条窗口
+     */
+    fun createProgressDialog(title:String,fileName:String,fileSize:String,playOrPauseListener:View.OnClickListener):LoadDialog{
+        this.loadViewResourceId = R.layout.dialog_progress_layout
+        setSize(WindowManager.LayoutParams.MATCH_PARENT,WindowManager.LayoutParams.WRAP_CONTENT)
+        loadViewListener = { view, _ ->
+            var layoutParams = view.layoutParams
+            layoutParams.height = DhUtil.dip2px(context,80f)
+            view.layoutParams = layoutParams
+            view.findViewById<ImageView>(R.id.app_img).visibility = View.GONE
+            var updateViewList = ArrayList<View>()
+            updateViewList.add(view.findViewById(R.id.load_progress))
+            updateViewList.add(view.findViewById(R.id.load_rate))
+            setProgressBar(view.findViewById(R.id.notify_progress),updateViewList)
+            view.findViewById<TextView>(R.id.notify_progress_title).text = title
+            view.findViewById<TextView>(R.id.notify_filename).text = fileName
+            view.findViewById<TextView>(R.id.load_size).text = fileSize
+            view.findViewById<ImageView>(R.id.notify_play_btn).setOnClickListener(playOrPauseListener)
+        }
+        return this
     }
 }

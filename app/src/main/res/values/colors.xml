@@ -8,4 +8,18 @@
     <color name="black_text">#000000</color>
 
     <color name="black_text2">#4D000000</color>
+
+    <!--状态颜色-->
+    <color name="colorError">#C280FF</color>
+    <color name="colorSuccess">#00D473</color>
+    <color name="colorWarning">#FF7F00</color>
+    <color name="colorTextDark">#252525</color>
+    <color name="colorTextLight">#FFFFFF</color>
+    <color name="colorLogCardBg">#f7f7f7</color>
+    <color name="colorImageBackground">#1BCC87</color>
+    <!--状态栏颜色-->
+    <color name="colorStatusBar">#132C47</color>
+    <color name="colorBackground">#ECECEC</color>
+    <!--button颜色-->
+    <color name="colorButton1">#00D473</color>
 </resources>

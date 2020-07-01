@@ -5,10 +5,14 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.gospell.stall.R
 import com.gospell.stall.common.annotation.InjectView
+import com.gospell.stall.ui.util.DhUtil
+import com.gospell.stall.ui.util.DrawableUtil
 import com.gospell.stall.util.ReflectUtil
 import java.lang.reflect.Method
 
@@ -33,6 +37,15 @@ abstract class BaseFragment: Fragment() {
     }
     fun jumpFragment(containerViewId: Int,targetFragment:Fragment){
         jumpFragment(containerViewId,targetFragment,null)
+    }
+    fun setRadiusButton(button: Button){
+        button.background = DrawableUtil.getGradientDrawable(
+            requireContext(),
+            DhUtil.dip2px(requireContext(), 2f),
+            requireContext().getColor(R.color.colorButton1),
+            DhUtil.dip2px(requireContext(), 0.2f),
+            requireContext().getColor(R.color.colorButton1)
+        )
     }
     fun TextView.checkBlank(message: String): String? {
         val text = this.text.toString()
